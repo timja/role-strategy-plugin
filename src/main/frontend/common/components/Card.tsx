@@ -1,0 +1,138 @@
+import {
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+interface CardProps {
+  name: string;
+  pattern?: string;
+  badges?: ReactNode;
+  summary?: ReactNode;
+  actions?: ReactNode;
+  readOnly?: boolean;
+  body: ReactNode;
+  defaultExpanded?: boolean;
+  onPatternClick?: () => void;
+}
+
+export function Card({
+  name,
+  pattern,
+  badges,
+  summary,
+  actions,
+  readOnly,
+  body,
+  defaultExpanded = false,
+  onPatternClick,
+}: CardProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const [bodyHeight, setBodyHeight] = useState<number | undefined>(
+    defaultExpanded ? undefined : 0,
+  );
+
+  useEffect(() => {
+    if (!bodyRef.current) return;
+    if (expanded) {
+      setBodyHeight(bodyRef.current.scrollHeight);
+    } else {
+      setBodyHeight(0);
+    }
+  }, [expanded, body]);
+
+  const toggle = () => setExpanded((v) => !v);
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggle();
+    }
+  };
+
+  const stop = (e: MouseEvent) => e.stopPropagation();
+
+  return (
+    <div
+      className={`rsp-card${readOnly ? " rsp-card--read-only" : ""}`}
+      aria-expanded={expanded}
+    >
+      <div
+        className="rsp-card__header"
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        onClick={toggle}
+        onKeyDown={onKeyDown}
+      >
+        <span className="rsp-card__name">{name}</span>
+        {pattern !== undefined && (
+          <span
+            className="rsp-card__pattern"
+            onClick={(e) => {
+              if (onPatternClick) {
+                stop(e);
+                onPatternClick();
+              }
+            }}
+          >
+            &quot;{pattern}&quot;
+          </span>
+        )}
+        {badges}
+        <span
+          className={`rsp-card__summary${!summary ? " rsp-card__summary--empty" : ""}`}
+        >
+          {summary}
+        </span>
+        {actions && (
+          <div className="rsp-card__actions" onClick={stop}>
+            {actions}
+          </div>
+        )}
+        <div className="rsp-card__toggle">
+          <ChevronIcon />
+        </div>
+      </div>
+      <div
+        ref={bodyRef}
+        className={`rsp-card__body${expanded ? "" : " rsp-card__body--collapsed"}`}
+        style={
+          bodyHeight === undefined
+            ? undefined
+            : {
+                maxHeight: bodyHeight,
+                overflow: expanded ? "visible" : "hidden",
+              }
+        }
+        aria-hidden={!expanded}
+      >
+        {body}
+      </div>
+    </div>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 512 512"
+      aria-hidden="true"
+    >
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="48"
+        d="M112 184l144 144 144-144"
+      />
+    </svg>
+  );
+}

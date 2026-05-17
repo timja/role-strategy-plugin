@@ -22,48 +22,48 @@
   - THE SOFTWARE.
   -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
+         xmlns:l="/lib/layout">
   <j:set var="header">
     <l:view>
       <l:app-bar title="${%Macros}"/>
       <p class="jenkins-page-description">
-        Macros extend access rights analysis and are used in the role field.
+        Macros extend access rights analysis and can be used in role patterns.
       </p>
       <p class="jenkins-!-margin-bottom-3" style="color:var(--text-color-secondary);font-size:0.875rem;">
-        Format:
-        <code>@macroName[:id][(param1, param2)]</code>
-        — e.g. <code>@BuildableJob</code>, <code>@BuildableJob:1</code>,
+        Format: <code>@macroName[:id][(param1, param2)]</code> — e.g.
+        <code>@BuildableJob</code>, <code>@BuildableJob:1</code>,
         <code>@Folder(folderName)</code>
       </p>
     </l:view>
   </j:set>
-  <l:settings-subpage title="${%Macros}" permissions="${it.strategy.SYSTEM_READ_AND_SOME_ROLES_ADMIN}" noDefer="true"
-                      includeBreadcrumb="true" header="${header}">
-    <link rel="stylesheet" href="${rootURL}/plugin/role-strategy/css/role-strategy.css" type="text/css"/>
-
+  <l:settings-subpage title="${%Macros}"
+                      permissions="${it.strategy.SYSTEM_READ_AND_SOME_ROLES_ADMIN}"
+                      noDefer="true"
+                      includeBreadcrumb="true"
+                      header="${header}">
     <j:invoke var="macros" method="getRoleMacroExtensions" on="${it}"/>
-
-    <div class="rsp-cards">
-      <j:forEach var="macroExt" items="${macros}">
-        <div class="rsp-card rsp-card--read-only" data-macro-name="${macroExt.getName()}">
-          <div class="rsp-card__header">
-            <span class="rsp-card__name">@${macroExt.getName()}</span>
-            <j:if test="${macroExt.IsApplicable(it.globalRoleType)}">
-              <span class="rsp-card__template-badge">Global</span>
-            </j:if>
-            <j:if test="${macroExt.IsApplicable(it.projectRoleType)}">
-              <span class="rsp-card__template-badge">Item</span>
-            </j:if>
-            <j:if test="${macroExt.IsApplicable(it.slaveRoleType)}">
-              <span class="rsp-card__template-badge">Agent</span>
-            </j:if>
-            <span class="rsp-card__summary">
-              <j:out value="${macroExt.getDescription()}"/>
-            </span>
-          </div>
-        </div>
-      </j:forEach>
-    </div>
-
+    <table class="jenkins-table jenkins-table--small jenkins-table--auto-width">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Global</th>
+          <th>Item</th>
+          <th>Agent</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <j:forEach var="macroExt" items="${macros}">
+          <tr>
+            <td><code>@${macroExt.getName()}</code></td>
+            <td>${macroExt.IsApplicable(it.globalRoleType) ? '✓' : ''}</td>
+            <td>${macroExt.IsApplicable(it.projectRoleType) ? '✓' : ''}</td>
+            <td>${macroExt.IsApplicable(it.slaveRoleType) ? '✓' : ''}</td>
+            <td><j:out value="${macroExt.getDescription()}"/></td>
+          </tr>
+        </j:forEach>
+      </tbody>
+    </table>
   </l:settings-subpage>
 </j:jelly>
