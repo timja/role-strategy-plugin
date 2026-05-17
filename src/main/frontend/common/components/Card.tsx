@@ -10,6 +10,7 @@ import {
 interface CardProps {
   name: string;
   pattern?: string;
+  leadingIcon?: ReactNode;
   badges?: ReactNode;
   summary?: ReactNode;
   actions?: ReactNode;
@@ -22,6 +23,7 @@ interface CardProps {
 export function Card({
   name,
   pattern,
+  leadingIcon,
   badges,
   summary,
   actions,
@@ -68,6 +70,9 @@ export function Card({
         onClick={toggle}
         onKeyDown={onKeyDown}
       >
+        {leadingIcon && (
+          <span className="rsp-card__leading-icon">{leadingIcon}</span>
+        )}
         <span className="rsp-card__name">{name}</span>
         {pattern !== undefined && (
           <span

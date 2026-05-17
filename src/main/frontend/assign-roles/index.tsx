@@ -13,6 +13,7 @@ if (mountNode) {
     "data-bootstrap",
   );
   const strategyUrl = mountNode.dataset.strategyUrl ?? "";
+  const descriptorUrl = mountNode.dataset.descriptorUrl ?? "";
   const canEdit = mountNode.dataset.canEdit === "true";
   const client = createStrategyClient(strategyUrl);
   createRoot(mountNode).render(
@@ -21,6 +22,7 @@ if (mountNode) {
         bootstrap={bootstrap}
         canEdit={canEdit}
         client={client}
+        descriptorUrl={descriptorUrl}
       />
     </StrictMode>,
   );

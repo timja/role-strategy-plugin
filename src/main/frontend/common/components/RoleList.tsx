@@ -1,11 +1,13 @@
 import { useId, useMemo, useState } from "react";
 
 import type { RoleType } from "../types/role.ts";
+import { HelpIcon } from "./HelpIcon.tsx";
 import { SearchInput } from "./SearchInput.tsx";
 
 interface RoleHeader {
   name: string;
   pattern: string;
+  permissionLabels?: string[];
 }
 
 interface RoleGroup {
@@ -103,6 +105,16 @@ export function RoleList({
                         &quot;{role.pattern}&quot;
                       </span>
                     )}
+                    {role.permissionLabels &&
+                      role.permissionLabels.length > 0 && (
+                        <HelpIcon
+                          description={
+                            <RolePermissionsTooltip
+                              labels={role.permissionLabels}
+                            />
+                          }
+                        />
+                      )}
                   </div>
                 );
               })}
@@ -111,5 +123,18 @@ export function RoleList({
         ))}
       </div>
     </>
+  );
+}
+
+function RolePermissionsTooltip({ labels }: { labels: string[] }) {
+  return (
+    <div>
+      <strong>Permissions</strong>
+      <ul style={{ margin: "0.25rem 0 0", paddingLeft: "1.1rem" }}>
+        {labels.map((l) => (
+          <li key={l}>{l}</li>
+        ))}
+      </ul>
+    </div>
   );
 }

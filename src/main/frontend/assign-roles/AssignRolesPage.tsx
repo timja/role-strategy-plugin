@@ -1,23 +1,31 @@
 import "../common/styles/role-strategy.scss";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { StrategyClient } from "../common/api/strategy.ts";
+import {
+  type SidValidationResult,
+  validateSids,
+} from "../common/api/validation.ts";
 import { useAppBarButton } from "../common/components/AppBarButton.tsx";
 import { Card } from "../common/components/Card.tsx";
+import { IconButton } from "../common/components/IconButton.tsx";
 import { SearchWithFilter } from "../common/components/SearchWithFilter.tsx";
+import { SidIcon } from "../common/components/SidIcon.tsx";
 import type {
   AssignedSid,
   AssignRolesBootstrap,
 } from "../common/types/bootstrap.ts";
 import type { PermissionGroup } from "../common/types/permission.ts";
 import type { RoleType } from "../common/types/role.ts";
+import { confirmAction } from "../common/utils/confirm.ts";
 import { AssignDialog } from "./AssignDialog.tsx";
 
 interface AssignRolesPageProps {
   bootstrap: AssignRolesBootstrap;
   canEdit: boolean;
   client: StrategyClient;
+  descriptorUrl: string;
 }
 
 interface MergedSid {
@@ -40,6 +48,7 @@ export function AssignRolesPage({
   bootstrap,
   canEdit,
   client,
+  descriptorUrl,
 }: AssignRolesPageProps) {
   const [assignments, setAssignments] = useState(bootstrap.assignments);
   const [search, setSearch] = useState("");
@@ -50,6 +59,10 @@ export function AssignRolesPage({
 
   const openAdd = useCallback(() => setMode("add"), []);
   useAppBarButton("rsp-assign-role-btn", openAdd);
+
+  const [validationStatus, setValidationStatus] = useState<
+    Record<string, SidValidationResult>
+  >({});
 
   const merged: MergedSid[] = useMemo(() => {
     const map = new Map<string, MergedSid>();
@@ -76,6 +89,28 @@ export function AssignRolesPage({
     if (!q) return merged;
     return merged.filter((m) => m.sid.toLowerCase().includes(q));
   }, [merged, search]);
+
+  // Validate each SID against the security realm so we can show a warning /
+  // not-found icon when the SID doesn't resolve.
+  useEffect(() => {
+    if (!descriptorUrl) return;
+    const controller = new AbortController();
+    const toCheck = merged
+      .filter((m) => {
+        if (m.type === "USER" && m.sid === "anonymous") return false;
+        if (m.type === "GROUP" && m.sid === "authenticated") return false;
+        return true;
+      })
+      .map((m) => ({ type: m.type, sid: m.sid }));
+    if (toCheck.length === 0) return;
+    void validateSids(descriptorUrl, toCheck, controller.signal, (entry, result) => {
+      setValidationStatus((prev) => ({
+        ...prev,
+        [`${entry.type}:${entry.sid}`]: result,
+      }));
+    });
+    return () => controller.abort();
+  }, [descriptorUrl, merged]);
 
   const replaceAssignments = (next: AssignRolesBootstrap["assignments"]) => {
     setAssignments(next);
@@ -184,13 +219,11 @@ export function AssignRolesPage({
   };
 
   const handleDeleteSid = async (sid: MergedSid) => {
-    if (
-      !window.confirm(
-        `Remove all assignments for ${sid.type.toLowerCase()} "${sid.sid}"?`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirmAction(
+      `Remove all assignments for ${sid.type.toLowerCase()} "${sid.sid}"?`,
+      "Remove",
+    );
+    if (!ok) return;
     setError(null);
     try {
       for (const scope of SCOPES) {
@@ -312,32 +345,38 @@ export function AssignRolesPage({
             return (
               <Card
                 key={`${m.type}:${m.sid}`}
-                name={m.sid}
-                badges={
-                  <span className="rsp-card__template-badge">
-                    {isUser ? "User" : "Group"}
-                  </span>
+                name={
+                  validationStatus[`${m.type}:${m.sid}`]?.displayName &&
+                  validationStatus[`${m.type}:${m.sid}`]?.status !== "not_found"
+                    ? validationStatus[`${m.type}:${m.sid}`]!.displayName!
+                    : m.sid
+                }
+                leadingIcon={
+                  <SidIcon
+                    type={m.type}
+                    status={(() => {
+                      const v = validationStatus[`${m.type}:${m.sid}`]?.status;
+                      if (v === "not_found") return "NOT_FOUND";
+                      if (v === "ambiguous") return "AMBIGUOUS";
+                      return undefined;
+                    })()}
+                  />
                 }
                 summary={summaryParts.sort().join(", ") || null}
                 actions={
                   canEdit && (
                     <>
-                      <button
-                        type="button"
-                        className="jenkins-button jenkins-button--tertiary rsp-card__action"
-                        title="Edit assignments"
+                      <IconButton
+                        tooltip="Edit assignments"
                         onClick={() => setMode({ edit: m.sid, type: m.type })}
-                      >
-                        <EditIcon />
-                      </button>
-                      <button
-                        type="button"
-                        className="jenkins-button jenkins-button--tertiary jenkins-!-destructive-color rsp-card__action"
-                        title="Remove from all scopes"
+                        icon={<EditIcon />}
+                      />
+                      <IconButton
+                        tooltip="Remove from all scopes"
+                        destructive
                         onClick={() => handleDeleteSid(m)}
-                      >
-                        <TrashIcon />
-                      </button>
+                        icon={<TrashIcon />}
+                      />
                     </>
                   )
                 }
@@ -404,6 +443,7 @@ export function AssignRolesPage({
           rolesByScope={allRolesByScope}
           permissions={bootstrap.permissions}
           existingKeys={new Set(merged.map((m) => `${m.type}:${m.sid}`))}
+          descriptorUrl={descriptorUrl}
           onCancel={() => setMode("closed")}
           onSubmit={handleAssign}
         />
@@ -419,6 +459,7 @@ export function AssignRolesPage({
           rolesByScope={allRolesByScope}
           permissions={bootstrap.permissions}
           existingKeys={new Set()}
+          descriptorUrl={descriptorUrl}
           onCancel={() => setMode("closed")}
           onSubmit={async (input) => {
             // Diff input.roles vs editing.roles and call assign/unassign per scope.
@@ -494,6 +535,7 @@ function TrashIcon() {
 }
 
 function EditIcon() {
+  // Ionicons "create-outline" — a pencil.
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -503,16 +545,12 @@ function EditIcon() {
       aria-hidden="true"
     >
       <path
-        d="M384 224v184a40 40 0 01-40 40H104a40 40 0 01-40-40V168a40 40 0 0140-40h152"
+        d="M364.13 125.25L87 403l-23 45 44.99-23 277.76-277.13-22.62-22.62zM420.69 68.69l-22.62 22.62 22.62 22.62 22.63-22.62a16 16 0 000-22.62l-.01-.01a15.99 15.99 0 00-22.62 0z"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="32"
-      />
-      <path
-        d="M459.94 53.25a16.06 16.06 0 00-23.22-.56L424.4 65a8 8 0 000 11.31l11.32 11.32a8 8 0 0011.31 0l12.24-12.24c6.55-6.55 7.27-17.27.67-23.94zM399.34 90.42L218.82 270.94a9 9 0 00-2.31 3.93L208.16 304a3.91 3.91 0 004.86 4.86l29.13-8.35a9 9 0 003.93-2.31L426.6 117.66a9 9 0 000-12.73l-14.13-14.51a9 9 0 00-13.13 0z"
-        fill="currentColor"
       />
     </svg>
   );

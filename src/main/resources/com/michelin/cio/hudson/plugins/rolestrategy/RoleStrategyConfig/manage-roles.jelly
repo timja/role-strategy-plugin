@@ -34,7 +34,7 @@
             ${%Add Role}
           </button>
         </j:if>
-        <a href="${rootURL}/${it.urlName}/permission-templates" class="jenkins-button">
+        <a href="${rootURL}/manage/${it.urlName}/permission-templates" class="jenkins-button">
           ${%Permission Templates}
         </a>
       </l:app-bar>
@@ -49,7 +49,7 @@
          data-resource-url="${resURL}"
          data-root-url="${rootURL}"
          data-strategy-url="${rootURL}/role-strategy/strategy"
-         data-list-macros-url="${rootURL}/${it.urlName}/list-macros"
+         data-list-macros-url="${rootURL}/manage/${it.urlName}/list-macros"
          data-permission-groups="${it.permissionGroupsJson}"
          data-bootstrap="${it.manageRolesBootstrapJson}"/>
     <script src="${resURL}/plugin/role-strategy/js/bundles/manage-roles-bundle.js" type="module"/>

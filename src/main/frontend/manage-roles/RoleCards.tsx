@@ -2,10 +2,12 @@ import { useMemo, useState } from "react";
 
 import type { StrategyClient } from "../common/api/strategy.ts";
 import { Card } from "../common/components/Card.tsx";
+import { IconButton } from "../common/components/IconButton.tsx";
 import { PermissionGroups } from "../common/components/PermissionGroups.tsx";
 import type { PermissionGroup } from "../common/types/permission.ts";
 import type { Role, RoleType } from "../common/types/role.ts";
 import type { PermissionTemplate } from "../common/types/template.ts";
+import { confirmAction } from "../common/utils/confirm.ts";
 import { EditRoleDialog } from "./EditRoleDialog.tsx";
 
 interface RoleCardsProps {
@@ -69,7 +71,8 @@ export function RoleCards({
   }, [roles, search, filterIds]);
 
   const handleDelete = async (role: Role) => {
-    if (!window.confirm(`Delete role "${role.name}"?`)) return;
+    const ok = await confirmAction(`Delete role "${role.name}"?`);
+    if (!ok) return;
     onError(null);
     try {
       await client.removeRoles(type, [role.name]);
@@ -176,22 +179,17 @@ export function RoleCards({
             );
             const actions = canEdit ? (
               <>
-                <button
-                  type="button"
-                  className="jenkins-button jenkins-button--tertiary rsp-card__action"
-                  title="Edit role"
+                <IconButton
+                  tooltip="Edit role"
                   onClick={() => setEditing(role)}
-                >
-                  <EditIcon />
-                </button>
-                <button
-                  type="button"
-                  className="jenkins-button jenkins-button--tertiary jenkins-!-destructive-color rsp-card__action"
-                  title="Delete role"
+                  icon={<EditIcon />}
+                />
+                <IconButton
+                  tooltip="Delete role"
+                  destructive
                   onClick={() => handleDelete(role)}
-                >
-                  <TrashIcon />
-                </button>
+                  icon={<TrashIcon />}
+                />
               </>
             ) : undefined;
             return (
@@ -262,6 +260,7 @@ function TrashIcon() {
 }
 
 function EditIcon() {
+  // Ionicons "create-outline" — a pencil.
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -271,16 +270,12 @@ function EditIcon() {
       aria-hidden="true"
     >
       <path
-        d="M384 224v184a40 40 0 01-40 40H104a40 40 0 01-40-40V168a40 40 0 0140-40h152"
+        d="M364.13 125.25L87 403l-23 45 44.99-23 277.76-277.13-22.62-22.62zM420.69 68.69l-22.62 22.62 22.62 22.62 22.63-22.62a16 16 0 000-22.62l-.01-.01a15.99 15.99 0 00-22.62 0z"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="32"
-      />
-      <path
-        d="M459.94 53.25a16.06 16.06 0 00-23.22-.56L424.4 65a8 8 0 000 11.31l11.32 11.32a8 8 0 0011.31 0l12.24-12.24c6.55-6.55 7.27-17.27.67-23.94zM399.34 90.42L218.82 270.94a9 9 0 00-2.31 3.93L208.16 304a3.91 3.91 0 004.86 4.86l29.13-8.35a9 9 0 003.93-2.31L426.6 117.66a9 9 0 000-12.73l-14.13-14.51a9 9 0 00-13.13 0z"
-        fill="currentColor"
       />
     </svg>
   );

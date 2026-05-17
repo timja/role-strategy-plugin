@@ -82,6 +82,77 @@ dialog.rsp-dialog {
 }
 
 /* ============================================
+   SID icon (User / Group / Ambiguous / Not found)
+   ============================================ */
+
+.rsp-sid-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  color: var(--text-color-secondary);
+  flex-shrink: 0;
+}
+
+.rsp-sid-icon__indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rsp-card__leading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-color-secondary);
+}
+
+.rsp-help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color-secondary);
+  cursor: help;
+  flex-shrink: 0;
+}
+
+.rsp-help-icon:hover,
+.rsp-help-icon:focus-visible {
+  color: var(--text-color);
+}
+
+/* Tippy tooltips inside a <dialog> need a higher z-index so they sit on top
+   of the dialog's contents. The dialog itself is in the top layer. */
+dialog .tippy-box {
+  z-index: 1;
+}
+
+.rsp-assign-validation {
+  margin-top: 0.25rem;
+}
+
+.rsp-assign-validation--ok {
+  color: var(--success-color, var(--text-color-secondary));
+}
+
+.rsp-assign-validation--ambiguous {
+  color: var(--warning-color, var(--warning));
+}
+
+.rsp-assign-validation--not_found {
+  color: var(--error-color);
+}
+
+.rsp-sid-icon--ambiguous .rsp-sid-icon__indicator {
+  color: var(--warning-color, var(--warning));
+}
+
+.rsp-sid-icon--not_found .rsp-sid-icon__indicator {
+  color: var(--error-color);
+}
+
+/* ============================================
    Vertical radio stack (React)
    ============================================ */
 

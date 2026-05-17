@@ -21,17 +21,17 @@ export function Dialog({
     if (!node.open) {
       node.showModal();
     }
+    // The browser fires "cancel" when ESC is pressed; let it close.
     const onCancel = (e: Event) => {
-      // Block ESC dismissal too, matching how Jenkins's dialog feels —
-      // the only way out is the close button or the primary action.
       e.preventDefault();
+      onClose();
     };
     node.addEventListener("cancel", onCancel);
     return () => {
       node.removeEventListener("cancel", onCancel);
       if (node.open) node.close();
     };
-  }, []);
+  }, [onClose]);
 
   return (
     <dialog

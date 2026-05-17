@@ -25,8 +25,18 @@ export interface ManageRolesBootstrap {
   };
 }
 
+export interface AssignRoleHeader {
+  name: string;
+  pattern: string;
+  permissionLabels: string[];
+}
+
 export interface AssignRolesBootstrap {
-  roles: BootstrapRoles;
+  roles: {
+    globalRoles: AssignRoleHeader[];
+    projectRoles: AssignRoleHeader[];
+    slaveRoles: AssignRoleHeader[];
+  };
   assignments: {
     globalRoles: AssignedSid[];
     projectRoles: AssignedSid[];

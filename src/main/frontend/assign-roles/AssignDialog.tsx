@@ -1,5 +1,9 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
+import {
+  checkSidName,
+  type SidValidationResult,
+} from "../common/api/validation.ts";
 import { Dialog } from "../common/components/Dialog.tsx";
 import { RadioGroup } from "../common/components/RadioGroup.tsx";
 import { RoleList } from "../common/components/RoleList.tsx";
@@ -9,6 +13,7 @@ import type { RoleType } from "../common/types/role.ts";
 interface RoleHeader {
   name: string;
   pattern: string;
+  permissionLabels?: string[];
 }
 
 interface AssignDialogProps {
@@ -29,6 +34,7 @@ interface AssignDialogProps {
   };
   permissions: AssignRolesBootstrap["permissions"];
   existingKeys: ReadonlySet<string>;
+  descriptorUrl?: string;
   onCancel: () => void;
   onSubmit: (input: {
     sid: string;
@@ -73,6 +79,7 @@ export function AssignDialog({
   rolesByScope,
   permissions,
   existingKeys,
+  descriptorUrl,
   onCancel,
   onSubmit,
 }: AssignDialogProps) {
@@ -87,6 +94,31 @@ export function AssignDialog({
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validation, setValidation] = useState<SidValidationResult | null>(
+    null,
+  );
+
+  // Debounced lookup of the SID against the security realm as the user types.
+  useEffect(() => {
+    if (!allowSidEdit || !descriptorUrl) return;
+    const value = sid.trim();
+    if (value === "") {
+      setValidation(null);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      void checkSidName(descriptorUrl, kind, value, controller.signal)
+        .then((result) => {
+          if (!controller.signal.aborted) setValidation(result);
+        })
+        .catch(() => {});
+    }, 300);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [allowSidEdit, descriptorUrl, sid, kind]);
 
   const toggleRole = (scope: RoleType, name: string, next: boolean) => {
     setSelectedRoles((prev) => {
@@ -176,6 +208,13 @@ export function AssignDialog({
             <div className="jenkins-form-description jenkins-!-color-red">
               An assignment for this {kind.toLowerCase()} already exists. Edit
               it from the card instead.
+            </div>
+          )}
+          {!duplicate && validation && sid.trim() !== "" && (
+            <div
+              className={`jenkins-form-description rsp-assign-validation rsp-assign-validation--${validation.status}`}
+            >
+              {validation.tooltip ?? validation.displayName ?? sid}
             </div>
           )}
         </div>

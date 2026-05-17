@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import type { PermissionGroup } from "../types/permission.ts";
 import { computeImpliedPermissions } from "../utils/impliedPermissions.ts";
+import { HelpIcon } from "./HelpIcon.tsx";
 
 interface PermissionGroupsProps {
   groups: PermissionGroup[];
@@ -47,15 +48,7 @@ export function PermissionGroups({
                   {isImplied && (
                     <span className="rsp-perm__item-implied">(implied)</span>
                   )}
-                  {p.description && (
-                    <span
-                      className="rsp-perm__item-info"
-                      title={p.description}
-                      aria-label={p.description}
-                    >
-                      <HelpIcon />
-                    </span>
-                  )}
+                  {p.description && <HelpIcon description={p.description} />}
                 </label>
               );
             })}
@@ -66,31 +59,3 @@ export function PermissionGroups({
   );
 }
 
-function HelpIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 512 512"
-      aria-hidden="true"
-    >
-      <circle
-        cx="256"
-        cy="256"
-        r="208"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="32"
-      />
-      <path
-        d="M160 164s4.4-46 96-46c89.7 0 96 39.8 96 64 0 36.5-37.3 50.2-64 64-19.7 10.2-32 24.8-32 56v8"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="32"
-      />
-      <circle cx="256" cy="416" r="20" fill="currentColor" />
-    </svg>
-  );
-}

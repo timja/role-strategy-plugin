@@ -34,7 +34,7 @@
             ${%Assign role}
           </button>
         </j:if>
-        <a href="${rootURL}/${it.urlName}/manage-roles" class="jenkins-button">
+        <a href="${rootURL}/manage/${it.urlName}/manage-roles" class="jenkins-button">
           ${%Manage Roles}
         </a>
       </l:app-bar>
@@ -49,6 +49,7 @@
          data-resource-url="${resURL}"
          data-root-url="${rootURL}"
          data-strategy-url="${rootURL}/role-strategy/strategy"
+         data-descriptor-url="${rootURL}/descriptor/${it.strategy.descriptor.clazz.name}"
          data-can-edit="${app.hasAnyPermission(it.strategy.ADMINISTER_AND_SOME_ROLES_ADMIN)}"
          data-bootstrap="${it.assignRolesBootstrapJson}"/>
     <script src="${resURL}/plugin/role-strategy/js/bundles/assign-roles-bundle.js" type="module"/>

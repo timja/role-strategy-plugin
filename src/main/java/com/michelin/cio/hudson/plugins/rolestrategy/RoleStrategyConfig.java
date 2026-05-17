@@ -401,6 +401,11 @@ public class RoleStrategyConfig extends ManagementLink {
       JSONObject roleJson = new JSONObject();
       roleJson.put("name", role.getName());
       roleJson.put("pattern", role.getPattern().toString());
+      JSONArray permLabels = new JSONArray();
+      for (Permission p : role.getPermissions()) {
+        permLabels.add(p.group.title.toString() + "/" + p.name);
+      }
+      roleJson.put("permissionLabels", permLabels);
       result.add(roleJson);
     }
     return result;
