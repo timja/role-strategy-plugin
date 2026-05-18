@@ -140,6 +140,27 @@ export function ManageRolesPage({
     setAddOpen(false);
   };
 
+  const matchesFilters = (role: Role) => {
+    const q = search.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      role.name.toLowerCase().includes(q) ||
+      (role.pattern ?? "").toLowerCase().includes(q);
+    const matchesFilter =
+      filterIds.size === 0 ||
+      [...filterIds].every((id) => role.permissionIds.includes(id));
+    return matchesSearch && matchesFilter;
+  };
+  const totalRoles =
+    roles.globalRoles.length +
+    roles.projectRoles.length +
+    roles.slaveRoles.length;
+  const filteredRoles =
+    roles.globalRoles.filter(matchesFilters).length +
+    roles.projectRoles.filter(matchesFilters).length +
+    roles.slaveRoles.filter(matchesFilters).length;
+  const isFiltering = search.trim() !== "" || filterIds.size > 0;
+
   return (
     <>
       {error && (
@@ -158,6 +179,13 @@ export function ManageRolesPage({
           onFilterToggle={toggleFilter}
           onFilterReset={() => setFilterIds(new Set())}
         />
+      </div>
+      <div className="rsp-result-count">
+        {filteredRoles.toLocaleString()}{" "}
+        {filteredRoles === 1 ? "role" : "roles"}
+        {isFiltering && filteredRoles !== totalRoles
+          ? ` (of ${totalRoles.toLocaleString()})`
+          : ""}
       </div>
       {SECTIONS.map((section) => (
         <RoleCards

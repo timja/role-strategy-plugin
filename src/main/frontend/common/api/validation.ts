@@ -61,7 +61,9 @@ export function parseValidationResponse(
     const cell = doc.querySelector(".rsp-table__cell");
     if (cell) {
       const attr = cell.getAttribute("tooltip");
-      if (attr) tooltip = attr;
+      // Guard against the literal string "undefined" sneaking in from a
+      // legacy format string on the backend.
+      if (attr && attr !== "undefined") tooltip = attr;
       // Strip the SVG icons; whatever text is left is the display name.
       cell.querySelectorAll("svg").forEach((s) => s.remove());
       const text = (cell.textContent ?? "").trim();

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useLayoutEffect, useRef } from "react";
 
 interface DialogProps {
   title: string;
@@ -15,12 +15,29 @@ export function Dialog({
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const node = ref.current;
     if (!node) return;
+    // Remember the page scroll before opening the dialog. `showModal()` and
+    // focus-into-view behaviours can push the page to scroll the dialog or
+    // its first focusable child into view, which is jarring when the dialog
+    // sits in the top layer and shouldn't affect page position.
+    const x = window.scrollX;
+    const y = window.scrollY;
     if (!node.open) {
       node.showModal();
     }
+    // Focus a flagged element ourselves with preventScroll so the browser
+    // doesn't drag the page to it. Browsers don't honour preventScroll on
+    // the native `autoFocus` attribute, which is why callers tag their
+    // initial focus target with `data-autofocus="true"` instead.
+    const focusTarget = node.querySelector<HTMLElement>('[data-autofocus="true"]');
+    focusTarget?.focus({ preventScroll: true });
+    // Restore twice — once synchronously, once after the next frame — to
+    // beat any late "scroll into view" the browser performs after the
+    // dialog enters the top layer.
+    window.scrollTo(x, y);
+    const raf = requestAnimationFrame(() => window.scrollTo(x, y));
     // The browser fires "cancel" when ESC is pressed; let it close.
     const onCancel = (e: Event) => {
       e.preventDefault();
@@ -28,6 +45,7 @@ export function Dialog({
     };
     node.addEventListener("cancel", onCancel);
     return () => {
+      cancelAnimationFrame(raf);
       node.removeEventListener("cancel", onCancel);
       if (node.open) node.close();
     };

@@ -3,33 +3,40 @@ import { Tooltip } from "./Tooltip.tsx";
 type SidStatus = "USER" | "GROUP" | "AMBIGUOUS" | "NOT_FOUND";
 
 interface SidIconProps {
-  type: "USER" | "GROUP";
+  type: "USER" | "GROUP" | "EITHER";
   status?: SidStatus;
 }
 
 /**
  * Renders the user / group icon, with an extra warning glyph next to it when
- * the SID didn't resolve in the security realm or is ambiguous.
+ * the SID didn't resolve in the security realm or is ambiguous. SIDs stored
+ * with type "EITHER" (legacy / ambiguous assignments) implicitly carry an
+ * AMBIGUOUS indicator even when checkName didn't flag them.
  */
 export function SidIcon({ type, status }: SidIconProps) {
-  // Resolve to the "real" type icon (USER or GROUP) — always render this so a
-  // not-found / ambiguous SID still shows whether it was assigned as a user or
-  // a group.
+  // Resolve to the "real" type icon. For an EITHER assignment we default to
+  // the people icon — admins resolving an ambiguity usually want the broader
+  // glyph until they pick USER or GROUP explicitly.
   const typeIcon = type === "USER" ? <PersonIcon /> : <PeopleIcon />;
+  const effectiveStatus: SidStatus | undefined =
+    status ?? (type === "EITHER" ? "AMBIGUOUS" : undefined);
   const indicator =
-    status === "NOT_FOUND" || status === "AMBIGUOUS" ? status : null;
+    effectiveStatus === "NOT_FOUND" || effectiveStatus === "AMBIGUOUS"
+      ? effectiveStatus
+      : null;
   const indicatorIcon =
     indicator === "NOT_FOUND" ? (
       <WarningIcon />
     ) : indicator === "AMBIGUOUS" ? (
       <HelpIcon />
     ) : null;
+  const label = TYPE_LABEL[type] ?? "SID";
   const tooltip =
     indicator === "NOT_FOUND"
-      ? `${TYPE_LABEL[type]} — not found in the security realm`
+      ? `${label} — not found in the security realm`
       : indicator === "AMBIGUOUS"
-        ? `${TYPE_LABEL[type]} — ambiguous (matches both a user and a group)`
-        : TYPE_LABEL[type];
+        ? `${label} — ambiguous (matches both a user and a group)`
+        : label;
 
   return (
     <Tooltip content={tooltip} placement="top">
@@ -40,16 +47,20 @@ export function SidIcon({ type, status }: SidIconProps) {
         aria-label={tooltip}
         role="img"
       >
-        {indicatorIcon && (
-          <span className="rsp-sid-icon__indicator">{indicatorIcon}</span>
-        )}
+        {/* Always render the indicator slot — even empty — so a validation
+            result arriving in doesn't shift card content sideways. */}
+        <span className="rsp-sid-icon__indicator">{indicatorIcon}</span>
         {typeIcon}
       </span>
     </Tooltip>
   );
 }
 
-const TYPE_LABEL = { USER: "User", GROUP: "Group" };
+const TYPE_LABEL: Record<string, string> = {
+  USER: "User",
+  GROUP: "Group",
+  EITHER: "Ambiguous SID",
+};
 
 function PersonIcon() {
   return (

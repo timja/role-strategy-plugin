@@ -20,6 +20,13 @@ interface AssignDialogProps {
   title: string;
   submitLabel: string;
   allowSidEdit: boolean;
+  /**
+   * Whether the Type radio can be edited. When false, the type is shown as
+   * read-only text. Set this to true on Add (always) and on Edit only when
+   * the existing SID is ambiguous (matches both a user and a group), so
+   * admins can migrate the assignment.
+   */
+  allowTypeEdit?: boolean;
   initialSid: string;
   initialType: "USER" | "GROUP";
   initialRoles: {
@@ -73,6 +80,7 @@ export function AssignDialog({
   title,
   submitLabel,
   allowSidEdit,
+  allowTypeEdit = allowSidEdit,
   initialSid,
   initialType,
   initialRoles,
@@ -201,7 +209,7 @@ export function AssignDialog({
             value={sid}
             onChange={(e) => setSid(e.target.value)}
             disabled={!allowSidEdit}
-            autoFocus={allowSidEdit}
+            data-autofocus={allowSidEdit ? "true" : undefined}
             required
           />
           {duplicate && (
@@ -220,19 +228,27 @@ export function AssignDialog({
         </div>
         <div className="jenkins-form-item">
           <div className="jenkins-form-label">Type</div>
-          <RadioGroup
-            name="sidType"
-            value={kind}
-            options={[
-              { value: "USER", label: "User" },
-              { value: "GROUP", label: "Group" },
-            ]}
-            onChange={(next) => setKind(next)}
-          />
-          {!allowSidEdit && kind !== initialType && (
-            <div className="jenkins-form-description">
-              Changing the type will migrate the existing assignments to the
-              selected type.
+          {allowTypeEdit ? (
+            <>
+              <RadioGroup
+                name="sidType"
+                value={kind}
+                options={[
+                  { value: "USER", label: "User" },
+                  { value: "GROUP", label: "Group" },
+                ]}
+                onChange={(next) => setKind(next)}
+              />
+              {!allowSidEdit && kind !== initialType && (
+                <div className="jenkins-form-description rsp-type-migration-hint">
+                  Changing the type will migrate the existing assignments to
+                  the selected type.
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="rsp-type-readonly">
+              {kind === "USER" ? "User" : "Group"}
             </div>
           )}
         </div>

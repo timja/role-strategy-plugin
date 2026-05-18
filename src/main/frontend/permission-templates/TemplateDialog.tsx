@@ -90,7 +90,7 @@ export function TemplateDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={!allowNameEdit}
-            autoFocus={allowNameEdit}
+            data-autofocus={allowNameEdit ? "true" : undefined}
             required
           />
           {nameTaken && (

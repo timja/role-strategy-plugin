@@ -141,7 +141,7 @@ export function AddRoleDialog({
             className="jenkins-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            autoFocus
+            data-autofocus="true"
             required
           />
         </div>

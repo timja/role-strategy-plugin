@@ -69,6 +69,10 @@ dialog.rsp-dialog {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  // Reserve the indicator slot so validation results don't shift the icon
+  // sideways when a warning/help glyph appears.
+  width: 14px;
+  height: 14px;
 }
 
 .rsp-card__leading-icon {
@@ -290,14 +294,25 @@ dialog .tippy-box {
 }
 
 .rsp-card {
+  position: relative;
   border: var(--jenkins-border);
   border-radius: var(--form-input-border-radius);
   background: var(--card-background);
   overflow: hidden;
 }
 
-.rsp-card--ambiguous {
-  border-left: 3px solid var(--warning-color, var(--warning));
+// Use a pseudo-element overlay rather than swapping border-left, so applying
+// .rsp-card--ambiguous doesn't shift card content sideways when validation
+// results arrive in (which otherwise strobes a page full of cards).
+.rsp-card--ambiguous::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--warning-color, var(--warning));
+  pointer-events: none;
 }
 
 .rsp-card--not-found .rsp-card__name {
@@ -846,6 +861,25 @@ dialog .tippy-box {
   color: var(--text-color-secondary);
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
+}
+
+.rsp-type-migration-hint {
+  margin-top: 0.5rem;
+}
+
+.rsp-type-readonly {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  padding: 0.25rem 0;
+}
+
+.rsp-either-hint {
+  margin: 0.5rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--form-input-border-radius);
+  background: color-mix(in srgb, var(--warning-color, var(--warning)) 12%, transparent);
+  color: var(--text-color);
+  font-size: 0.875rem;
 }
 
 .rsp-pagination {

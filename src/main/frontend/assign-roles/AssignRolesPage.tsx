@@ -30,7 +30,7 @@ interface AssignRolesPageProps {
 
 interface MergedSid {
   sid: string;
-  type: "USER" | "GROUP";
+  type: "USER" | "GROUP" | "EITHER";
   roles: {
     globalRoles: string[];
     projectRoles: string[];
@@ -53,7 +53,9 @@ export function AssignRolesPage({
   const [assignments, setAssignments] = useState(bootstrap.assignments);
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState<
-    "closed" | "add" | { edit: string; type: "USER" | "GROUP" }
+    | "closed"
+    | "add"
+    | { edit: string; type: "USER" | "GROUP" | "EITHER" }
   >("closed");
   const [error, setError] = useState<string | null>(null);
 
@@ -240,8 +242,10 @@ export function AssignRolesPage({
         if (!existing || existing.roles.length === 0) continue;
         if (sid.type === "USER") {
           await client.deleteUser(scope.type, sid.sid);
-        } else {
+        } else if (sid.type === "GROUP") {
           await client.deleteGroup(scope.type, sid.sid);
+        } else {
+          await client.deleteSid(scope.type, sid.sid);
         }
       }
       const next: AssignRolesBootstrap["assignments"] = {
@@ -321,23 +325,43 @@ export function AssignRolesPage({
   // all of them up-front floods the descriptor's checkName endpoint.
   useEffect(() => {
     if (!descriptorUrl) return;
+    // EITHER assignments are already known to be ambiguous — no point
+    // hitting checkName for them.
     const toCheck = pageItems
-      .filter((m) => !validationStatus[`${m.type}:${m.sid}`])
+      .filter(
+        (m): m is MergedSid & { type: "USER" | "GROUP" } =>
+          m.type !== "EITHER" && !validationStatus[`${m.type}:${m.sid}`],
+      )
       .map((m) => ({ type: m.type, sid: m.sid }));
     if (toCheck.length === 0) return;
     const controller = new AbortController();
+    // Batch validation results into a single state update per animation
+    // frame. Without batching, ~100 individual setValidationStatus calls
+    // produce ~100 re-renders of every card, which strobes visibly.
+    let pending: Record<string, SidValidationResult> = {};
+    let scheduled = false;
+    const flush = () => {
+      scheduled = false;
+      if (Object.keys(pending).length === 0) return;
+      const batch = pending;
+      pending = {};
+      setValidationStatus((prev) => ({ ...prev, ...batch }));
+    };
     void validateSids(
       descriptorUrl,
       toCheck,
       controller.signal,
       (entry, result) => {
-        setValidationStatus((prev) => ({
-          ...prev,
-          [`${entry.type}:${entry.sid}`]: result,
-        }));
+        pending[`${entry.type}:${entry.sid}`] = result;
+        if (!scheduled) {
+          scheduled = true;
+          requestAnimationFrame(flush);
+        }
       },
     );
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
     // Intentionally exclude validationStatus from deps — we only want to
     // kick off validation when the visible page changes, not on every
     // result that comes back.
@@ -457,6 +481,13 @@ export function AssignRolesPage({
                   readOnly={!canEdit}
                   body={
                     <div className="rsp-assign-detail">
+                      {m.type === "EITHER" && (
+                        <div className="jenkins-form-description rsp-either-hint">
+                          This SID was stored ambiguously. Use{" "}
+                          <strong>Edit assignments</strong> to migrate it to a
+                          user or group before editing roles.
+                        </div>
+                      )}
                       {SCOPES.map((scope) => {
                         const assignedNames = new Set(m.roles[scope.type]);
                         const availableRoles = allRolesByScope[scope.type];
@@ -479,7 +510,7 @@ export function AssignRolesPage({
                                   <input
                                     type="checkbox"
                                     checked={assignedNames.has(role.name)}
-                                    disabled={!canEdit}
+                                    disabled={!canEdit || m.type === "EITHER"}
                                     onChange={(e) =>
                                       handleToggleRole(
                                         m,
@@ -555,8 +586,15 @@ export function AssignRolesPage({
           title={`Edit assignments: ${editing.sid}`}
           submitLabel="Save"
           allowSidEdit={false}
+          allowTypeEdit={
+            editing.type === "EITHER" ||
+            validationStatus[`${editing.type}:${editing.sid}`]?.status ===
+              "ambiguous"
+          }
           initialSid={editing.sid}
-          initialType={editing.type}
+          // EITHER is a legacy storage type and isn't a Type radio option,
+          // so default to USER when the admin opens an ambiguous entry.
+          initialType={editing.type === "EITHER" ? "USER" : editing.type}
           initialRoles={editing.roles}
           rolesByScope={allRolesByScope}
           permissions={bootstrap.permissions}
@@ -566,14 +604,22 @@ export function AssignRolesPage({
           onSubmit={async (input) => {
             const typeChanged = input.type !== editing.type;
             if (typeChanged) {
-              // Migration: unassign all under the old type, then
-              // assign all under the new type. The user explicitly
-              // chose a different SID type to resolve ambiguity.
+              // Migration: clear the existing assignments under the old
+              // type, then assign all under the new type. For an EITHER
+              // source we use deleteSid (the only API that removes
+              // EITHER-typed entries); for USER/GROUP sources the per-role
+              // unassign is enough.
               for (const scope of SCOPES) {
-                for (const r of editing.roles[scope.type]) {
-                  await (editing.type === "USER"
-                    ? client.unassignUserRole(scope.type, r, editing.sid)
-                    : client.unassignGroupRole(scope.type, r, editing.sid));
+                if (editing.type === "EITHER") {
+                  if (editing.roles[scope.type].length > 0) {
+                    await client.deleteSid(scope.type, editing.sid);
+                  }
+                } else {
+                  for (const r of editing.roles[scope.type]) {
+                    await (editing.type === "USER"
+                      ? client.unassignUserRole(scope.type, r, editing.sid)
+                      : client.unassignGroupRole(scope.type, r, editing.sid));
+                  }
                 }
                 for (const r of input.roles[scope.type] ?? []) {
                   await (input.type === "USER"

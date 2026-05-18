@@ -51,7 +51,13 @@ export interface AssignRolesBootstrap {
 
 export interface AssignedSid {
   sid: string;
-  type: "USER" | "GROUP";
+  /**
+   * "EITHER" represents a legacy / ambiguous assignment — Jenkins couldn't
+   * decide whether the SID was a user or a group at write time and stored
+   * it under both. The UI should let admins migrate these to a concrete
+   * type via the Edit dialog.
+   */
+  type: "USER" | "GROUP" | "EITHER";
   roles: string[];
 }
 
