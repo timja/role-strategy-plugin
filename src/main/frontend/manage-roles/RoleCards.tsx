@@ -3,11 +3,11 @@ import { type KeyboardEvent, useMemo, useState } from "react";
 import type { StrategyClient } from "../common/api/strategy.ts";
 import { Card } from "../common/components/Card.tsx";
 import { IconButton } from "../common/components/IconButton.tsx";
-import { PermissionGroups } from "../common/components/PermissionGroups.tsx";
 import type { PermissionGroup } from "../common/types/permission.ts";
 import type { Role, RoleType } from "../common/types/role.ts";
 import type { PermissionTemplate } from "../common/types/template.ts";
 import { confirmAction } from "../common/utils/confirm.ts";
+import { computeImpliedPermissions } from "../common/utils/impliedPermissions.ts";
 import { EditRoleDialog } from "./EditRoleDialog.tsx";
 
 interface RoleCardsProps {
@@ -79,33 +79,6 @@ export function RoleCards({
       onRoleChange(roles.filter((r) => r.name !== role.name));
     } catch (err) {
       onError((err as Error).message);
-    }
-  };
-
-  const handleTogglePermission = async (
-    role: Role,
-    permissionId: string,
-    next: boolean,
-  ) => {
-    onError(null);
-    const selected = new Set(role.permissionIds);
-    if (next) selected.add(permissionId);
-    else selected.delete(permissionId);
-    const nextRole: Role = { ...role, permissionIds: Array.from(selected) };
-    const prevRoles = roles;
-    onRoleChange(roles.map((r) => (r.name === role.name ? nextRole : r)));
-    try {
-      await client.addRole({
-        type,
-        roleName: role.name,
-        permissionIds: nextRole.permissionIds,
-        overwrite: true,
-        pattern: showPattern ? role.pattern : undefined,
-        template: role.templateName ?? undefined,
-      });
-    } catch (err) {
-      onRoleChange(prevRoles);
-      onError(`Failed to update ${role.name}: ${(err as Error).message}`);
     }
   };
 
@@ -229,13 +202,9 @@ export function RoleCards({
                 actions={actions}
                 readOnly={!canEdit}
                 body={
-                  <PermissionGroups
-                    groups={permissionGroups}
-                    selectedIds={new Set(role.permissionIds)}
-                    disabled={!canEdit || templated}
-                    onToggle={(pid, next) =>
-                      handleTogglePermission(role, pid, next)
-                    }
+                  <AssignedPermissionsList
+                    permissionGroups={permissionGroups}
+                    permissionIds={role.permissionIds}
                   />
                 }
               />
@@ -254,6 +223,60 @@ export function RoleCards({
         />
       )}
     </section>
+  );
+}
+
+function AssignedPermissionsList({
+  permissionGroups,
+  permissionIds,
+}: {
+  permissionGroups: PermissionGroup[];
+  permissionIds: string[];
+}) {
+  const selectedIds = useMemo(() => new Set(permissionIds), [permissionIds]);
+  const flat = useMemo(
+    () => permissionGroups.flatMap((g) => g.permissions),
+    [permissionGroups],
+  );
+  const implied = useMemo(
+    () => computeImpliedPermissions(flat, selectedIds),
+    [flat, selectedIds],
+  );
+
+  if (selectedIds.size === 0) {
+    return (
+      <div className="rsp-perm rsp-perm--empty">No permissions assigned</div>
+    );
+  }
+
+  return (
+    <div className="rsp-perm">
+      {permissionGroups.map((group) => {
+        const items = group.permissions.filter(
+          (p) => selectedIds.has(p.id) || implied.has(p.id),
+        );
+        if (items.length === 0) return null;
+        return (
+          <fieldset key={group.title} className="rsp-perm__group">
+            <legend className="rsp-perm__group-title">{group.title}</legend>
+            <ul className="rsp-perm__assigned">
+              {items.map((p) => (
+                <li
+                  key={p.id}
+                  className="rsp-perm__assigned-item"
+                  data-permission-id={p.id}
+                >
+                  <span className="rsp-perm__item-name">{p.name}</span>
+                  {implied.has(p.id) && !selectedIds.has(p.id) && (
+                    <span className="rsp-perm__item-implied">(implied)</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </fieldset>
+        );
+      })}
+    </div>
   );
 }
 

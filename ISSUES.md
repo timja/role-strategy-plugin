@@ -1,4 +1,7 @@
-1. ~~There's no count of roles like in refine-ui~~
-2. ~~Role sections aren't collapsible like in refine-ui~~
-3. ~~When assigning a lot of users the page performance falls over, refine-ui used pagination and only including elements in the dom when expanded to reduce dom elements~~
-4. ~~Slow load time for manage roles page when lots of roles~~
+1. Anonymous and Authenticated name checking
+2. Dialog Add button doesn't look right
+3. Hovering over a user or group who has been modified by checkName should show their ID
+4. Edit icons are using wrong icons
+5. Tippy tooltips are wrong style
+6. Help icon wrong style
+7. TODO check ambiguous handling

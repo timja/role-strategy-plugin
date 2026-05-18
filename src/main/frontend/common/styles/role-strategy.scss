@@ -38,35 +38,6 @@ dialog.rsp-dialog {
   max-height: 85vh;
 }
 
-.rsp-dialog__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.75rem 0.75rem 0.75rem 1.25rem;
-  border-bottom: var(--jenkins-border);
-  flex-shrink: 0;
-}
-
-.rsp-dialog__title {
-  font-size: 1.05rem;
-  font-weight: var(--font-bold-weight);
-}
-
-.rsp-dialog__close {
-  padding: 0.25rem !important;
-  min-width: 1.875rem !important;
-  min-height: 1.875rem;
-  border-radius: 0.4375rem;
-  color: var(--text-color-secondary);
-}
-
-.rsp-dialog__contents {
-  padding: 1rem 1.25rem;
-  overflow-y: auto;
-  flex: 1 1 auto;
-}
-
 .rsp-dialog__form {
   display: flex;
   flex-direction: column;
@@ -513,6 +484,33 @@ dialog .tippy-box {
   flex-wrap: wrap;
   gap: 0.25rem;
   margin: 0.5rem 0.75rem 0.75rem 0.75rem;
+}
+
+.rsp-perm__assigned {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin: 0.5rem 0.75rem 0.75rem 0.75rem;
+  padding: 0;
+}
+
+.rsp-perm__assigned-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--form-input-border-radius);
+  background: var(--card-background-lighter, var(--button-background));
+  color: var(--text-color);
+  font-size: 0.8125rem;
+}
+
+.rsp-perm--empty {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  font-style: italic;
+  padding: 0.75rem;
 }
 
 .rsp-perm__item {

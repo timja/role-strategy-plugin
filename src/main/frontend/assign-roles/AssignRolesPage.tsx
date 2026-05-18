@@ -125,12 +125,17 @@ export function AssignRolesPage({
     const controller = new AbortController();
     const toCheck = merged.map((m) => ({ type: m.type, sid: m.sid }));
     if (toCheck.length === 0) return;
-    void validateSids(descriptorUrl, toCheck, controller.signal, (entry, result) => {
-      setValidationStatus((prev) => ({
-        ...prev,
-        [`${entry.type}:${entry.sid}`]: result,
-      }));
-    });
+    void validateSids(
+      descriptorUrl,
+      toCheck,
+      controller.signal,
+      (entry, result) => {
+        setValidationStatus((prev) => ({
+          ...prev,
+          [`${entry.type}:${entry.sid}`]: result,
+        }));
+      },
+    );
     return () => controller.abort();
   }, [descriptorUrl, merged]);
 
@@ -380,103 +385,108 @@ export function AssignRolesPage({
               : ""}
           </div>
           <div className="rsp-cards">
-          {pageItems.map((m) => {
-            const summaryParts: string[] = [];
-            for (const scope of SCOPES) {
-              for (const r of m.roles[scope.type]) {
-                summaryParts.push(`${scope.label}/${r}`);
+            {pageItems.map((m) => {
+              const summaryParts: string[] = [];
+              for (const scope of SCOPES) {
+                for (const r of m.roles[scope.type]) {
+                  summaryParts.push(`${scope.label}/${r}`);
+                }
               }
-            }
-            const isUser = m.type === "USER";
-            const isBuiltIn =
-              (m.type === "USER" && m.sid === "anonymous") ||
-              (m.type === "GROUP" && m.sid === "authenticated");
-            return (
-              <Card
-                key={`${m.type}:${m.sid}`}
-                name={
-                  validationStatus[`${m.type}:${m.sid}`]?.displayName &&
-                  validationStatus[`${m.type}:${m.sid}`]?.status !== "not_found"
-                    ? validationStatus[`${m.type}:${m.sid}`]!.displayName!
-                    : m.sid
-                }
-                leadingIcon={
-                  <SidIcon
-                    type={m.type}
-                    status={(() => {
-                      const v = validationStatus[`${m.type}:${m.sid}`]?.status;
-                      if (v === "not_found") return "NOT_FOUND";
-                      if (v === "ambiguous") return "AMBIGUOUS";
-                      return undefined;
-                    })()}
-                  />
-                }
-                summary={summaryParts.sort().join(", ") || null}
-                actions={
-                  canEdit && (
-                    <>
-                      <IconButton
-                        tooltip="Edit assignments"
-                        onClick={() => setMode({ edit: m.sid, type: m.type })}
-                        icon={<EditIcon />}
-                      />
-                      {!isBuiltIn && (
+              const isUser = m.type === "USER";
+              const isBuiltIn =
+                (m.type === "USER" && m.sid === "anonymous") ||
+                (m.type === "GROUP" && m.sid === "authenticated");
+              return (
+                <Card
+                  key={`${m.type}:${m.sid}`}
+                  name={
+                    validationStatus[`${m.type}:${m.sid}`]?.displayName &&
+                    validationStatus[`${m.type}:${m.sid}`]?.status !==
+                      "not_found"
+                      ? validationStatus[`${m.type}:${m.sid}`]!.displayName!
+                      : m.sid
+                  }
+                  leadingIcon={
+                    <SidIcon
+                      type={m.type}
+                      status={(() => {
+                        const v =
+                          validationStatus[`${m.type}:${m.sid}`]?.status;
+                        if (v === "not_found") return "NOT_FOUND";
+                        if (v === "ambiguous") return "AMBIGUOUS";
+                        return undefined;
+                      })()}
+                    />
+                  }
+                  summary={summaryParts.sort().join(", ") || null}
+                  actions={
+                    canEdit && (
+                      <>
                         <IconButton
-                          tooltip="Remove from all scopes"
-                          destructive
-                          onClick={() => handleDeleteSid(m)}
-                          icon={<TrashIcon />}
+                          tooltip="Edit assignments"
+                          onClick={() => setMode({ edit: m.sid, type: m.type })}
+                          icon={<EditIcon />}
                         />
-                      )}
-                    </>
-                  )
-                }
-                readOnly={!canEdit}
-                body={
-                  <div className="rsp-assign-detail">
-                    {SCOPES.map((scope) => {
-                      const assignedNames = new Set(m.roles[scope.type]);
-                      const availableRoles = allRolesByScope[scope.type];
-                      if (availableRoles.length === 0) return null;
-                      return (
-                        <fieldset key={scope.type} className="rsp-perm__group">
-                          <legend className="rsp-perm__group-title">
-                            {scope.label} roles
-                          </legend>
-                          <div className="rsp-perm__permissions">
-                            {availableRoles.map((role) => (
-                              <label
-                                key={role.name}
-                                className="rsp-perm__item"
-                                title={role.pattern}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={assignedNames.has(role.name)}
-                                  disabled={!canEdit}
-                                  onChange={(e) =>
-                                    handleToggleRole(
-                                      m,
-                                      scope.type,
-                                      role.name,
-                                      e.target.checked,
-                                    )
-                                  }
-                                />
-                                <span className="rsp-perm__item-name">
-                                  {role.name}
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        </fieldset>
-                      );
-                    })}
-                  </div>
-                }
-              />
-            );
-          })}
+                        {!isBuiltIn && (
+                          <IconButton
+                            tooltip="Remove from all scopes"
+                            destructive
+                            onClick={() => handleDeleteSid(m)}
+                            icon={<TrashIcon />}
+                          />
+                        )}
+                      </>
+                    )
+                  }
+                  readOnly={!canEdit}
+                  body={
+                    <div className="rsp-assign-detail">
+                      {SCOPES.map((scope) => {
+                        const assignedNames = new Set(m.roles[scope.type]);
+                        const availableRoles = allRolesByScope[scope.type];
+                        if (availableRoles.length === 0) return null;
+                        return (
+                          <fieldset
+                            key={scope.type}
+                            className="rsp-perm__group"
+                          >
+                            <legend className="rsp-perm__group-title">
+                              {scope.label} roles
+                            </legend>
+                            <div className="rsp-perm__permissions">
+                              {availableRoles.map((role) => (
+                                <label
+                                  key={role.name}
+                                  className="rsp-perm__item"
+                                  title={role.pattern}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={assignedNames.has(role.name)}
+                                    disabled={!canEdit}
+                                    onChange={(e) =>
+                                      handleToggleRole(
+                                        m,
+                                        scope.type,
+                                        role.name,
+                                        e.target.checked,
+                                      )
+                                    }
+                                  />
+                                  <span className="rsp-perm__item-name">
+                                    {role.name}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </fieldset>
+                        );
+                      })}
+                    </div>
+                  }
+                />
+              );
+            })}
           </div>
           {totalPages > 1 && (
             <div className="rsp-pagination">

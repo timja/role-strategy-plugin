@@ -16,11 +16,14 @@ export function SidIcon({ type, status }: SidIconProps) {
   // not-found / ambiguous SID still shows whether it was assigned as a user or
   // a group.
   const typeIcon = type === "USER" ? <PersonIcon /> : <PeopleIcon />;
-  const indicator = status === "NOT_FOUND" || status === "AMBIGUOUS"
-    ? status
-    : null;
+  const indicator =
+    status === "NOT_FOUND" || status === "AMBIGUOUS" ? status : null;
   const indicatorIcon =
-    indicator === "NOT_FOUND" ? <WarningIcon /> : indicator === "AMBIGUOUS" ? <HelpIcon /> : null;
+    indicator === "NOT_FOUND" ? (
+      <WarningIcon />
+    ) : indicator === "AMBIGUOUS" ? (
+      <HelpIcon />
+    ) : null;
   const tooltip =
     indicator === "NOT_FOUND"
       ? `${TYPE_LABEL[type]} — not found in the security realm`
