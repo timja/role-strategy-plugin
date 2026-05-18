@@ -41,9 +41,8 @@
     </l:view>
   </j:set>
   <l:settings-subpage permissions="${it.strategy.SYSTEM_READ_AND_SOME_ROLES_ADMIN}"
-                      title="${%Role Assignments}"
+                      title="${%Role Management}"
                       noDefer="true"
-                      includeBreadcrumb="true"
                       header="${header}">
     <div id="assign-roles-root"
          data-resource-url="${resURL}"

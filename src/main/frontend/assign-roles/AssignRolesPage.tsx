@@ -66,6 +66,22 @@ export function AssignRolesPage({
 
   const merged: MergedSid[] = useMemo(() => {
     const map = new Map<string, MergedSid>();
+    // Anonymous (USER) and Authenticated (GROUP) are Jenkins built-in
+    // principals — always show them at the top, even when no roles are
+    // assigned, so admins can grant baseline access without first guessing
+    // the SID.
+    const builtIns: { sid: string; type: "USER" | "GROUP" }[] = [
+      { sid: "anonymous", type: "USER" },
+      { sid: "authenticated", type: "GROUP" },
+    ];
+    for (const b of builtIns) {
+      const key = `${b.type}:${b.sid}`;
+      map.set(key, {
+        sid: b.sid,
+        type: b.type,
+        roles: { globalRoles: [], projectRoles: [], slaveRoles: [] },
+      });
+    }
     for (const scope of SCOPES) {
       for (const entry of assignments[scope.type] as AssignedSid[]) {
         const key = `${entry.type}:${entry.sid}`;
@@ -81,7 +97,19 @@ export function AssignRolesPage({
         m.roles[scope.type] = entry.roles;
       }
     }
-    return Array.from(map.values()).sort((a, b) => a.sid.localeCompare(b.sid));
+    const all = Array.from(map.values());
+    const builtInRank = (m: MergedSid) =>
+      m.type === "USER" && m.sid === "anonymous"
+        ? 0
+        : m.type === "GROUP" && m.sid === "authenticated"
+          ? 1
+          : 2;
+    return all.sort((a, b) => {
+      const ra = builtInRank(a);
+      const rb = builtInRank(b);
+      if (ra !== rb) return ra - rb;
+      return a.sid.localeCompare(b.sid);
+    });
   }, [assignments]);
 
   const filtered = useMemo(() => {
@@ -95,13 +123,7 @@ export function AssignRolesPage({
   useEffect(() => {
     if (!descriptorUrl) return;
     const controller = new AbortController();
-    const toCheck = merged
-      .filter((m) => {
-        if (m.type === "USER" && m.sid === "anonymous") return false;
-        if (m.type === "GROUP" && m.sid === "authenticated") return false;
-        return true;
-      })
-      .map((m) => ({ type: m.type, sid: m.sid }));
+    const toCheck = merged.map((m) => ({ type: m.type, sid: m.sid }));
     if (toCheck.length === 0) return;
     void validateSids(descriptorUrl, toCheck, controller.signal, (entry, result) => {
       setValidationStatus((prev) => ({
@@ -294,6 +316,22 @@ export function AssignRolesPage({
     });
   };
 
+  // Paginate to keep the DOM small when there are many SIDs. Reset to page 0
+  // whenever the active set changes (search/filter/data updates).
+  const PAGE_SIZE = 100;
+  const [page, setPage] = useState(0);
+  useEffect(() => {
+    setPage(0);
+  }, [search, filterIds, merged.length]);
+  const totalPages = Math.max(1, Math.ceil(filteredByRoles.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageStart = safePage * PAGE_SIZE;
+  const pageEnd = Math.min(pageStart + PAGE_SIZE, filteredByRoles.length);
+  const pageItems = useMemo(
+    () => filteredByRoles.slice(pageStart, pageEnd),
+    [filteredByRoles, pageStart, pageEnd],
+  );
+
   const editing =
     typeof mode === "object" && "edit" in mode
       ? (merged.find((m) => m.sid === mode.edit && m.type === mode.type) ??
@@ -333,8 +371,16 @@ export function AssignRolesPage({
           No matching users or groups
         </div>
       ) : (
-        <div className="rsp-cards">
-          {filteredByRoles.map((m) => {
+        <>
+          <div className="rsp-result-count">
+            {filteredByRoles.length.toLocaleString()}{" "}
+            {filteredByRoles.length === 1 ? "result" : "results"}
+            {filteredByRoles.length !== merged.length
+              ? ` (of ${merged.length.toLocaleString()})`
+              : ""}
+          </div>
+          <div className="rsp-cards">
+          {pageItems.map((m) => {
             const summaryParts: string[] = [];
             for (const scope of SCOPES) {
               for (const r of m.roles[scope.type]) {
@@ -342,6 +388,9 @@ export function AssignRolesPage({
               }
             }
             const isUser = m.type === "USER";
+            const isBuiltIn =
+              (m.type === "USER" && m.sid === "anonymous") ||
+              (m.type === "GROUP" && m.sid === "authenticated");
             return (
               <Card
                 key={`${m.type}:${m.sid}`}
@@ -371,12 +420,14 @@ export function AssignRolesPage({
                         onClick={() => setMode({ edit: m.sid, type: m.type })}
                         icon={<EditIcon />}
                       />
-                      <IconButton
-                        tooltip="Remove from all scopes"
-                        destructive
-                        onClick={() => handleDeleteSid(m)}
-                        icon={<TrashIcon />}
-                      />
+                      {!isBuiltIn && (
+                        <IconButton
+                          tooltip="Remove from all scopes"
+                          destructive
+                          onClick={() => handleDeleteSid(m)}
+                          icon={<TrashIcon />}
+                        />
+                      )}
                     </>
                   )
                 }
@@ -426,7 +477,32 @@ export function AssignRolesPage({
               />
             );
           })}
-        </div>
+          </div>
+          {totalPages > 1 && (
+            <div className="rsp-pagination">
+              <button
+                type="button"
+                className="jenkins-button jenkins-button--tertiary"
+                disabled={safePage === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                Previous
+              </button>
+              <span className="rsp-pagination__status">
+                {(pageStart + 1).toLocaleString()}–{pageEnd.toLocaleString()} of{" "}
+                {filteredByRoles.length.toLocaleString()}
+              </span>
+              <button
+                type="button"
+                className="jenkins-button jenkins-button--tertiary"
+                disabled={safePage >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
       {mode === "add" && (
         <AssignDialog

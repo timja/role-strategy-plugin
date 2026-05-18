@@ -33,19 +33,27 @@ export function Card({
   onPatternClick,
 }: CardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+  // Lazy body mount: keep the body out of the DOM until first expand, then
+  // keep it mounted so expand/collapse transitions stay cheap. This keeps the
+  // page light when there are many cards (each body holds many checkboxes).
+  const [hasMountedBody, setHasMountedBody] = useState(defaultExpanded);
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const [bodyHeight, setBodyHeight] = useState<number | undefined>(
     defaultExpanded ? undefined : 0,
   );
 
   useEffect(() => {
+    if (expanded && !hasMountedBody) {
+      setHasMountedBody(true);
+      return;
+    }
     if (!bodyRef.current) return;
     if (expanded) {
       setBodyHeight(bodyRef.current.scrollHeight);
     } else {
       setBodyHeight(0);
     }
-  }, [expanded, body]);
+  }, [expanded, hasMountedBody, body]);
 
   const toggle = () => setExpanded((v) => !v);
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -115,7 +123,7 @@ export function Card({
         }
         aria-hidden={!expanded}
       >
-        {body}
+        {hasMountedBody && body}
       </div>
     </div>
   );

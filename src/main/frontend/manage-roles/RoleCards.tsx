@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type KeyboardEvent, useMemo, useState } from "react";
 
 import type { StrategyClient } from "../common/api/strategy.ts";
 import { Card } from "../common/components/Card.tsx";
@@ -151,10 +151,37 @@ export function RoleCards({
   };
 
   const isFiltering = search.trim() !== "" || filterIds.size > 0;
+  const [collapsed, setCollapsed] = useState(false);
+  const toggleCollapsed = () => setCollapsed((v) => !v);
+  const onHeaderKeyDown = (e: KeyboardEvent<HTMLHeadingElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleCollapsed();
+    }
+  };
 
   return (
-    <section className="rsp-container" data-role-type={type}>
-      <h2 className="jenkins-section__title">{title}</h2>
+    <section
+      className={`rsp-container rsp-section-collapsible${collapsed ? " rsp-section--collapsed" : ""}`}
+      data-role-type={type}
+    >
+      <h2
+        className="jenkins-section__title"
+        role="button"
+        tabIndex={0}
+        aria-expanded={!collapsed}
+        onClick={toggleCollapsed}
+        onKeyDown={onHeaderKeyDown}
+      >
+        {title}
+        <span className="rsp-section-count">
+          {filtered.length}
+          {isFiltering && filtered.length !== roles.length
+            ? ` of ${roles.length}`
+            : ""}
+        </span>
+        <SectionChevron />
+      </h2>
       {roles.length === 0 && !isFiltering && (
         <div className="jenkins-notice">
           <div className="jenkins-notice__title">{emptyTitle}</div>
@@ -254,6 +281,28 @@ function TrashIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="32"
+      />
+    </svg>
+  );
+}
+
+function SectionChevron() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 512 512"
+      aria-hidden="true"
+      className="rsp-section-chevron"
+    >
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="48"
+        d="M112 184l144 144 144-144"
       />
     </svg>
   );

@@ -826,8 +826,43 @@ dialog .tippy-box {
 }
 
 .rsp-section-collapsible.rsp-section--collapsed .rsp-container,
-.rsp-section-collapsible.rsp-section--collapsed > .jenkins-form-item {
+.rsp-section-collapsible.rsp-section--collapsed > .jenkins-form-item,
+.rsp-section-collapsible.rsp-section--collapsed > .rsp-cards,
+.rsp-section-collapsible.rsp-section--collapsed > .jenkins-notice {
   display: none;
+}
+
+.rsp-result-count {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.rsp-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  font-size: 0.875rem;
+}
+
+.rsp-pagination__status {
+  color: var(--text-color-secondary);
+}
+
+.rsp-section-count {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.0625rem 0.5rem;
+  border-radius: 999px;
+  background: var(--card-background-lighter, var(--button-background));
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  vertical-align: middle;
+  min-width: 1.5em;
+  text-align: center;
 }
 
 /* ============================================
