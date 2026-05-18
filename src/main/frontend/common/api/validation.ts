@@ -60,7 +60,8 @@ export function parseValidationResponse(
     const doc = new DOMParser().parseFromString(html, "text/html");
     const cell = doc.querySelector(".rsp-table__cell");
     if (cell) {
-      tooltip = cell.getAttribute("tooltip") ?? undefined;
+      const attr = cell.getAttribute("tooltip");
+      if (attr) tooltip = attr;
       // Strip the SVG icons; whatever text is left is the display name.
       cell.querySelectorAll("svg").forEach((s) => s.remove());
       const text = (cell.textContent ?? "").trim();
@@ -68,6 +69,19 @@ export function parseValidationResponse(
     }
   } catch {
     // ignore parsing failures and keep the fallback
+  }
+  // Always return a useful tooltip — the descriptor doesn't always include
+  // one in the HTML response, so fall back to a status-appropriate message
+  // instead of leaving the field undefined (which renders as the string
+  // "undefined" in some browsers).
+  if (!tooltip) {
+    if (status === "ambiguous") {
+      tooltip = "Matches both a user and a group in the security realm.";
+    } else if (status === "not_found") {
+      tooltip = "Not found in the security realm.";
+    } else {
+      tooltip = displayName;
+    }
   }
   return { status, displayName, tooltip };
 }

@@ -1,5 +1,6 @@
-import Tippy from "@tippyjs/react";
 import type { ReactNode } from "react";
+
+import { Tooltip } from "./Tooltip.tsx";
 
 interface IconButtonProps {
   tooltip: string;
@@ -10,7 +11,7 @@ interface IconButtonProps {
 }
 
 /**
- * Icon-only Jenkins tertiary button with a Tippy tooltip.
+ * Icon-only Jenkins tertiary button with a tooltip.
  */
 export function IconButton({
   tooltip,
@@ -20,12 +21,7 @@ export function IconButton({
   disabled,
 }: IconButtonProps) {
   return (
-    <Tippy
-      content={tooltip}
-      placement="top"
-      delay={[200, 0]}
-      appendTo={(reference) => reference.closest("dialog") ?? document.body}
-    >
+    <Tooltip content={tooltip} placement="top">
       <button
         type="button"
         className={`jenkins-button jenkins-button--tertiary rsp-card__action${
@@ -37,6 +33,6 @@ export function IconButton({
       >
         {icon}
       </button>
-    </Tippy>
+    </Tooltip>
   );
 }

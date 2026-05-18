@@ -1,4 +1,4 @@
-import Tippy from "@tippyjs/react";
+import { Tooltip } from "./Tooltip.tsx";
 
 type SidStatus = "USER" | "GROUP" | "AMBIGUOUS" | "NOT_FOUND";
 
@@ -32,12 +32,7 @@ export function SidIcon({ type, status }: SidIconProps) {
         : TYPE_LABEL[type];
 
   return (
-    <Tippy
-      content={tooltip}
-      placement="top"
-      delay={[200, 0]}
-      appendTo={(reference) => reference.closest("dialog") ?? document.body}
-    >
+    <Tooltip content={tooltip} placement="top">
       <span
         className={`rsp-sid-icon rsp-sid-icon--${type.toLowerCase()}${
           indicator ? ` rsp-sid-icon--${indicator.toLowerCase()}` : ""
@@ -50,7 +45,7 @@ export function SidIcon({ type, status }: SidIconProps) {
         )}
         {typeIcon}
       </span>
-    </Tippy>
+    </Tooltip>
   );
 }
 

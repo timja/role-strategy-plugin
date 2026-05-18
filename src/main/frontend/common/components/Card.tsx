@@ -7,14 +7,18 @@ import {
   useState,
 } from "react";
 
+import { Tooltip } from "./Tooltip.tsx";
+
 interface CardProps {
   name: string;
+  nameTooltip?: string;
   pattern?: string;
   leadingIcon?: ReactNode;
   badges?: ReactNode;
   summary?: ReactNode;
   actions?: ReactNode;
   readOnly?: boolean;
+  className?: string;
   body: ReactNode;
   defaultExpanded?: boolean;
   onPatternClick?: () => void;
@@ -22,12 +26,14 @@ interface CardProps {
 
 export function Card({
   name,
+  nameTooltip,
   pattern,
   leadingIcon,
   badges,
   summary,
   actions,
   readOnly,
+  className,
   body,
   defaultExpanded = false,
   onPatternClick,
@@ -49,11 +55,17 @@ export function Card({
     }
     if (!bodyRef.current) return;
     if (expanded) {
+      // Let the browser handle subsequent reflows (we set "auto" via the
+      // `overflow: visible` branch). Re-measuring on every render would
+      // restart the max-height transition and cause a strobing flicker.
       setBodyHeight(bodyRef.current.scrollHeight);
     } else {
       setBodyHeight(0);
     }
-  }, [expanded, hasMountedBody, body]);
+    // Intentionally exclude `body` from deps: a fresh JSX element on every
+    // parent render would otherwise loop here and re-trigger the transition.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expanded, hasMountedBody]);
 
   const toggle = () => setExpanded((v) => !v);
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -67,7 +79,7 @@ export function Card({
 
   return (
     <div
-      className={`rsp-card${readOnly ? " rsp-card--read-only" : ""}`}
+      className={`rsp-card${readOnly ? " rsp-card--read-only" : ""}${className ? ` ${className}` : ""}`}
       aria-expanded={expanded}
     >
       <div
@@ -81,7 +93,13 @@ export function Card({
         {leadingIcon && (
           <span className="rsp-card__leading-icon">{leadingIcon}</span>
         )}
-        <span className="rsp-card__name">{name}</span>
+        {nameTooltip && nameTooltip !== name ? (
+          <Tooltip content={nameTooltip} placement="top">
+            <span className="rsp-card__name">{name}</span>
+          </Tooltip>
+        ) : (
+          <span className="rsp-card__name">{name}</span>
+        )}
         {pattern !== undefined && (
           <span
             className="rsp-card__pattern"

@@ -218,20 +218,24 @@ export function AssignDialog({
             </div>
           )}
         </div>
-        {allowSidEdit && (
-          <div className="jenkins-form-item">
-            <div className="jenkins-form-label">Type</div>
-            <RadioGroup
-              name="sidType"
-              value={kind}
-              options={[
-                { value: "USER", label: "User" },
-                { value: "GROUP", label: "Group" },
-              ]}
-              onChange={(next) => setKind(next)}
-            />
-          </div>
-        )}
+        <div className="jenkins-form-item">
+          <div className="jenkins-form-label">Type</div>
+          <RadioGroup
+            name="sidType"
+            value={kind}
+            options={[
+              { value: "USER", label: "User" },
+              { value: "GROUP", label: "Group" },
+            ]}
+            onChange={(next) => setKind(next)}
+          />
+          {!allowSidEdit && kind !== initialType && (
+            <div className="jenkins-form-description">
+              Changing the type will migrate the existing assignments to the
+              selected type.
+            </div>
+          )}
+        </div>
         <div className="jenkins-form-item">
           <div className="jenkins-form-label">Roles</div>
           {groups.length === 0 ? (

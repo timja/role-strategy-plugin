@@ -86,11 +86,14 @@ dialog.rsp-dialog {
   color: var(--text-color-secondary);
   cursor: help;
   flex-shrink: 0;
+  margin-left: 0.35rem;
+  opacity: 0.65;
+  transition: opacity var(--standard-transition);
 }
 
 .rsp-help-icon:hover,
 .rsp-help-icon:focus-visible {
-  color: var(--text-color);
+  opacity: 1;
 }
 
 /* Tippy tooltips inside a <dialog> need a higher z-index so they sit on top
@@ -291,6 +294,15 @@ dialog .tippy-box {
   border-radius: var(--form-input-border-radius);
   background: var(--card-background);
   overflow: hidden;
+}
+
+.rsp-card--ambiguous {
+  border-left: 3px solid var(--warning-color, var(--warning));
+}
+
+.rsp-card--not-found .rsp-card__name {
+  text-decoration: line-through;
+  color: var(--error-color);
 }
 
 /* Connected borders managed via JS classes */
