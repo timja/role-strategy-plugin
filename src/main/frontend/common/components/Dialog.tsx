@@ -31,7 +31,9 @@ export function Dialog({
     // doesn't drag the page to it. Browsers don't honour preventScroll on
     // the native `autoFocus` attribute, which is why callers tag their
     // initial focus target with `data-autofocus="true"` instead.
-    const focusTarget = node.querySelector<HTMLElement>('[data-autofocus="true"]');
+    const focusTarget = node.querySelector<HTMLElement>(
+      '[data-autofocus="true"]',
+    );
     focusTarget?.focus({ preventScroll: true });
     // Restore twice — once synchronously, once after the next frame — to
     // beat any late "scroll into view" the browser performs after the

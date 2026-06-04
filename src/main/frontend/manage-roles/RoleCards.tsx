@@ -312,15 +312,15 @@ function TrashIcon() {
 function SectionChevron() {
   return (
     <svg
-        className="rsp-section-chevron"
+      className="rsp-section-chevron"
       viewBox="0 0 512 512"
       fill="none"
       stroke="currentColor"
-      stroke-width="48"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeWidth="48"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
-      <path d="M112 184l144 144 144-144"></path>
+      <path d="M112 184l144 144 144-144" />
     </svg>
   );
 }

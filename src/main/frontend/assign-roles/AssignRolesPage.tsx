@@ -53,9 +53,7 @@ export function AssignRolesPage({
   const [assignments, setAssignments] = useState(bootstrap.assignments);
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState<
-    | "closed"
-    | "add"
-    | { edit: string; type: "USER" | "GROUP" | "EITHER" }
+    "closed" | "add" | { edit: string; type: "USER" | "GROUP" | "EITHER" }
   >("closed");
   const [error, setError] = useState<string | null>(null);
 
@@ -347,18 +345,15 @@ export function AssignRolesPage({
       pending = {};
       setValidationStatus((prev) => ({ ...prev, ...batch }));
     };
-    void validateSids(
-      descriptorUrl,
-      toCheck,
-      controller.signal,
-      (entry, result) => {
-        pending[`${entry.type}:${entry.sid}`] = result;
-        if (!scheduled) {
-          scheduled = true;
-          requestAnimationFrame(flush);
-        }
-      },
-    );
+    validateSids(descriptorUrl, toCheck, controller.signal, (entry, result) => {
+      pending[`${entry.type}:${entry.sid}`] = result;
+      if (!scheduled) {
+        scheduled = true;
+        requestAnimationFrame(flush);
+      }
+    }).catch(() => {
+      // ignore lookup failures
+    });
     return () => {
       controller.abort();
     };
@@ -423,7 +418,6 @@ export function AssignRolesPage({
                   summaryParts.push(`${scope.label}/${r}`);
                 }
               }
-              const isUser = m.type === "USER";
               const isBuiltIn =
                 (m.type === "USER" && m.sid === "anonymous") ||
                 (m.type === "GROUP" && m.sid === "authenticated");
@@ -721,18 +715,18 @@ function EditIcon() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <title>Edit</title>
-      <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+      <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
         <path
           d="M399.608914,57 C413.784791,57 427.960684,62.4078333 438.776426,73.2235621 C449.592141,84.0392638 455,98.2149574 455,112.390686 C455,126.566468 449.592105,140.742274 438.776426,151.558078 L438.776426,151.558078 L191.040603,399.293596 C182.232434,408.101755 171.575528,414.840664 159.841736,419.022244 L159.841736,419.022244 L58.9309718,454.983885 C58.3980325,455.005817 57.9083807,454.793595 57.5574476,454.442654 C57.2063668,454.091565 56.9941379,453.601684 57.0161199,453.068522 L57.0161199,453.068522 L92.977296,352.157786 C97.1588787,340.423838 103.897856,329.766792 112.706129,320.958529 L112.706129,320.958529 L360.441401,73.2235621 C371.257143,62.4078333 385.433036,57 399.608914,57 Z"
           stroke="currentColor"
-          stroke-width="32"
-          fill-rule="nonzero"
-        ></path>
+          strokeWidth="32"
+          fillRule="nonzero"
+        />
         <polyline
           fill="currentColor"
           transform="translate(362.692388, 154.192388) rotate(45.000000) translate(-362.692388, -154.192388) "
           points="308.192388 138.192388 359.945436 138.192388 417.192388 138.192388 417.192388 170.192388 360.652543 170.192388 308.192388 170.192388"
-        ></polyline>
+        />
       </g>
     </svg>
   );

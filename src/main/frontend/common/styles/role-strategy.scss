@@ -877,7 +877,11 @@ dialog .tippy-box {
   margin: 0.5rem 0.75rem;
   padding: 0.5rem 0.75rem;
   border-radius: var(--form-input-border-radius);
-  background: color-mix(in srgb, var(--warning-color, var(--warning)) 12%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--warning-color, var(--warning)) 12%,
+    transparent
+  );
   color: var(--text-color);
   font-size: 0.875rem;
 }

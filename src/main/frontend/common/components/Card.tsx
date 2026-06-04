@@ -64,7 +64,6 @@ export function Card({
     }
     // Intentionally exclude `body` from deps: a fresh JSX element on every
     // parent render would otherwise loop here and re-trigger the transition.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expanded, hasMountedBody]);
 
   const toggle = () => setExpanded((v) => !v);

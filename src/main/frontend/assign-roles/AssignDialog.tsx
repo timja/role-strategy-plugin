@@ -115,12 +115,18 @@ export function AssignDialog({
       return;
     }
     const controller = new AbortController();
-    const timer = setTimeout(() => {
-      void checkSidName(descriptorUrl, kind, value, controller.signal)
-        .then((result) => {
-          if (!controller.signal.aborted) setValidation(result);
-        })
-        .catch(() => {});
+    const timer = setTimeout(async () => {
+      try {
+        const result = await checkSidName(
+          descriptorUrl,
+          kind,
+          value,
+          controller.signal,
+        );
+        if (!controller.signal.aborted) setValidation(result);
+      } catch {
+        // ignore lookup failures
+      }
     }, 300);
     return () => {
       controller.abort();
@@ -241,8 +247,8 @@ export function AssignDialog({
               />
               {!allowSidEdit && kind !== initialType && (
                 <div className="jenkins-form-description rsp-type-migration-hint">
-                  Changing the type will migrate the existing assignments to
-                  the selected type.
+                  Changing the type will migrate the existing assignments to the
+                  selected type.
                 </div>
               )}
             </>
