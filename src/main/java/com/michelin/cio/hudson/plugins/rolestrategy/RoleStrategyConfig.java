@@ -471,9 +471,6 @@ public class RoleStrategyConfig extends ManagementLink {
   private static JSONArray permissionGroupsToJson(RoleBasedAuthorizationStrategy.DescriptorImpl descriptor, String type) {
     JSONArray groupsArray = new JSONArray();
     List<PermissionGroup> groups = descriptor.getGroups(type);
-    if (groups == null) {
-      return groupsArray;
-    }
     Set<PermissionGroup> deduped = new LinkedHashSet<>(groups);
     for (PermissionGroup group : deduped) {
       JSONObject g = new JSONObject();
