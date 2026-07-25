@@ -221,6 +221,36 @@ describe("ManageRolesPage", () => {
     expect(screen.getByPlaceholderText("Search item roles")).toHaveValue("");
   });
 
+  it("opens the matching dialog from the pattern chip with the keyboard", async () => {
+    const user = userEvent.setup();
+    const client = renderPage();
+
+    await user.click(screen.getByRole("tab", { name: "Item roles" }));
+    screen.getByRole("button", { name: "dev-.*" }).focus();
+    await user.keyboard("{Enter}");
+
+    await waitFor(() =>
+      expect(client.getMatchingJobs).toHaveBeenCalledWith("dev-.*", 15),
+    );
+    // The key press must not also toggle the surrounding card open.
+    expect(
+      screen
+        .getAllByRole("button", { name: /dev/ })
+        .find((b) => b.classList.contains("rsp-card__header"))
+        ?.getAttribute("aria-expanded") ?? "false",
+    ).toBe("false");
+  });
+
+  it("activates the edit action with the keyboard", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    screen.getByLabelText("Edit role").focus();
+    await user.keyboard("{Enter}");
+
+    expect(await screen.findByText("Edit role: admin")).toBeInTheDocument();
+  });
+
   it("opens the matching dialog from the pattern chip", async () => {
     const user = userEvent.setup();
     const client = renderPage();
