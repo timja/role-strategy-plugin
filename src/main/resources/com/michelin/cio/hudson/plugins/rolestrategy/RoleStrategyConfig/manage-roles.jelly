@@ -31,15 +31,15 @@
   <j:set var="header">
     <l:view>
       <l:app-bar title="${%Roles}">
-        <a href="permission-templates" class="jenkins-button">
-          ${%Permission Templates}
-        </a>
         <j:if test="${app.hasAnyPermission(it.strategy.ADMINISTER_AND_SOME_ROLES_ADMIN)}">
           <button type="button" class="jenkins-button jenkins-button--primary" id="rsp-add-role-btn">
             <l:icon src="symbol-add plugin-ionicons-api"/>
             ${%Add Role}
           </button>
         </j:if>
+        <a href="permission-templates" class="jenkins-button">
+          ${%Permission Templates}
+        </a>
       </l:app-bar>
       <p class="jenkins-page-description">
         ${%blurb}
