@@ -548,46 +548,37 @@ dialog .tippy-box {
 .rsp-tabs {
   display: flex;
   gap: 0.25rem;
-  padding: 0.25rem;
-  width: fit-content;
-  border-radius: 0.75rem;
-  background: var(--card-background);
-  border: var(--jenkins-border--subtle);
-}
 
-.rsp-tabs__tab {
-  appearance: none;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-bold-weight);
-  color: var(--text-color-secondary);
-  padding: 0.375rem 0.875rem;
-  border-radius: 0.5rem;
-  transition: var(--standard-transition);
-}
+  button {
+    border-radius: 100px;
 
-.rsp-tabs__tab:hover {
-  background: var(--item-background--hover);
-  color: var(--text-color);
-}
+    &:not(.jenkins-button--tertiary) {
+      pointer-events: none;
+      font-weight: var(--font-bold-weight);
+    }
 
-.rsp-tabs__tab:active {
-  background: var(--item-background--active);
-}
+    &.jenkins-button--tertiary {
+      color: color-mix(
+        in sRGB,
+        var(--text-color-secondary) 75%,
+        var(--text-color)
+      ) !important;
 
-.rsp-tabs__tab--active,
-.rsp-tabs__tab--active:hover {
-  background: var(--accent-color);
-  /* Same pairing as the primary button: stays readable in the dark theme,
-     where --background flips dark but this variable stays light. */
-  color: var(--button-color--primary, var(--background));
-}
+      &::before,
+      &::after {
+        inset: 3px;
+      }
+    }
 
-.rsp-tabs__tab:focus-visible {
-  outline: 2px solid var(--focus-input-border);
-  outline-offset: 1px;
+    &:hover {
+      color: var(--text-color) !important;
+
+      &::before,
+      &::after {
+        inset: 1.5px;
+      }
+    }
+  }
 }
 
 /* ============================================

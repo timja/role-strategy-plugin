@@ -51,7 +51,7 @@ export function Tabs({ tabs, activeKey, onSelect, panelId }: TabsProps) {
             aria-selected={active}
             aria-controls={panelId}
             tabIndex={active ? 0 : -1}
-            className={`rsp-tabs__tab${active ? " rsp-tabs__tab--active" : ""}`}
+            className={`jenkins-button ${active ? "" : " jenkins-button--tertiary"}`}
             onClick={() => onSelect(tab.key)}
           >
             {tab.label}
