@@ -114,6 +114,7 @@ export function SidCard({
           icon={<TrashIcon />}
         />
       )}
+      {internal && <div className="rsp-card__action"></div>}
     </>
   );
 
